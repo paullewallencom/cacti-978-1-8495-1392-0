@@ -1,0 +1,53 @@
+#!/usr/bin/perl
+
+# be strict with ourselves
+use strict;
+
+# Set some constants tp make the code better readable
+use constant FALSE => 0;
+use constant TRUE => 1;
+
+# where is the rra directory of Cacti ?
+my $rraDir = '/var/www/html/cacti/rra';
+
+# What are the database credentials ?
+my $dbUser = 'cactiuser';
+my $dbPwd = 'myPassw0rd';
+
+# get all the data source ids from the database:
+my $commandOutput = `echo "Select id from data_local;" |
+ mysql -B -N -L -u $dbUser --password=$dbPwd cacti | 
+ awk '{ print $1}'`;
+
+# create an array with he data source ids by 
+# splitting the output string at the newline char:
+my @dataSourcesList = split/\n/,$commandOutput;
+
+# open the rra directory for reading
+opendir( DIR, $rraDir );
+
+# while the directory contains files, 
+# read the filename one by one:
+while ( my $file = readdir ( DIR ) ) {
+	# skip all files that do not end with rrd:
+	next if ( not( $file =~ m/\.rrd$/ig ) );
+		
+	# We do not know yet if the file exists:
+	my $fileExists = FALSE;
+
+	# Cycle through each of the data source ids and check
+	# if the file exists
+	foreach my $dataSource ( @dataSourcesList ) {
+		# The filename should end with e.g. '_8.rrd'
+		if ( $file =~ m/_$dataSource\.rrd$/ ) {
+			# if it does, then we did find the file !
+			$fileExists = TRUE;
+		}
+	}
+	# If we did not find the file, we can/should remove it:
+	if ( $fileExists == FALSE ) {
+		print "File [$file] does not exist`in the db. Removing\n";
+		# unlink( $file );
+	}
+}
+closedir( DIR );

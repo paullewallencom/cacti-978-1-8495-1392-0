@@ -1,0 +1,23 @@
+#!/usr/bin/perl
+
+# Be strict with our variable and method declaration
+use strict;
+
+# Where do we find the secure log file ?
+my $secure_log = '/var/log/secure';
+
+# This HASH variable will hold our data
+my %data;
+
+# Retrieve the number of lines containing a "Invalid user" string
+$data{'invalid_users'} = `grep "Invalid user" $secure_log  | wc -l`;
+
+# Retrieve the number of lines containing a "Accepted password" string
+$data{'valid_logons'} = `grep "Accepted password" $secure_log  | wc -l`;
+
+# Remove the line ending character from the string:
+chomp( $data{'invalid_users'} );
+chomp( $data{'valid_logons'} );
+
+# Print the data as "Name1:Var1 Name2:Var2". Do not put a line ending to the string !
+print "InvalidUsers:".$data{'invalid_users'}." ValidLogons:".$data{'valid_logons'};
